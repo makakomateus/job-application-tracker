@@ -31,7 +31,7 @@ Some design choices came from the AI and I kept them:
 - Job Match is a plain function in `matching.py` that doesn't touch the database, so it has unit tests in `tests/test_job_match.py`. It ranks by percentage, then by number of matched skills, and puts jobs with no requirements last.
 - Every delete button shows a `confirm()` warning first. The foreign keys are plain like in Assignment 2, so the app catches MySQL's "row is still referenced" error and shows a message instead of crashing.
 - `salary_min <= salary_max` is checked in the app before saving.
-- The demo video was recorded by the agent too. It drove OBS, the terminals and a clean browser window (so no autofill popped up), and I watched the result after.
+- The agent recorded a first demo video with OBS. After the database was changed to match my earlier assignments, that video was out of date, so I recorded the final video myself, following a step-by-step script the agent wrote.
 
 It also tested its own work with an end-to-end script that created, edited and deleted rows in all 4 tables, triggered the validation errors, checked that a company or job that is still in use can't be deleted, and checked Job Match. For example "python, SQL, FLASK" gave Software Developer 100% (3/3), and the next result was Data Analyst 67% (2/3) with Tableau missing. It also cloned the repo fresh and followed the README to make sure the setup steps work.
 
@@ -39,7 +39,7 @@ When git had no name or email set, the agent stopped and asked me instead of gue
 
 ## What I Modified
 
-- Scope. The first plan had extras like an average salary stat, upcoming interviews, and a status filter. I told it to keep the scope down, and it didn't add more extras after that.
+- Scope. The first plan already had a few extras built in: an average salary stat, upcoming interviews, and a status filter. I kept them since they were done, and told it not to add anything more after that.
 - MySQL. It wasn't installed on my computer, so for development the project runs MySQL 8.4 in a Docker container. The README still works with a normal MySQL install.
 - Docker crash. Docker Desktop kept crashing on startup because the Claude app runs in a Windows app sandbox with a virtualized AppData folder, which broke Docker's socket file. The fix was starting Docker Desktop outside the sandbox (through a WMI process create), and then it worked.
 - Wrong package version. The AI pinned `mysql-connector-python` to 9.4.0 from memory, but the version actually installed was 26.10.0. This was caught before the commit and `requirements.txt` was fixed using `pip freeze`.
