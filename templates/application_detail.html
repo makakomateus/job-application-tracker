@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Application{% endblock %}
+{% block content %}
+{% set rounds = (application.interview_data or {}).get('rounds', []) %}
+<div class="page-head">
+    <div>
+        <h1>{{ application.job_title }}</h1>
+        <p class="subtitle">{{ application.company_name }}</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-light" href="{{ url_for('application_edit', application_id=application.application_id) }}">Edit</a>
+        <a class="btn btn-light" href="{{ url_for('applications') }}">Back to applications</a>
+    </div>
+</div>
+
+<div class="card">
+    <dl class="details">
+        <dt>Job</dt><dd><a href="{{ url_for('job_detail', job_id=application.job_id) }}">{{ application.job_title }}</a></dd>
+        <dt>Company</dt><dd><a href="{{ url_for('company_detail', company_id=application.company_id) }}">{{ application.company_name }}</a></dd>
+        <dt>Applied on</dt><dd>{{ application.application_date }}</dd>
+        <dt>Status</dt><dd>{{ status_badge(application.status) }}</dd>
+        <dt>Resume version</dt><dd>{{ application.resume_version or '-' }}</dd>
+        <dt>Cover letter</dt><dd>{{ 'Sent' if application.cover_letter_sent else 'Not sent' }}</dd>
+    </dl>
+</div>
+
+<div class="card">
+    <h2>Interview rounds ({{ rounds|length }})</h2>
+    {% if rounds %}
+    <ul class="timeline">
+        {% for r in rounds %}
+        <li>
+            <strong>{{ r.type or 'Interview' }}</strong>{% if r.date %} <span class="muted">on {{ r.date }}</span>{% endif %}
+            {% if r.interviewer %}<br><span class="small">With {{ r.interviewer }}</span>{% endif %}
+            {% if r.notes %}<br><span class="small muted">{{ r.notes }}</span>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty"><p>No interviews recorded yet.</p></div>
+    {% endif %}
+</div>
+{% endblock %}

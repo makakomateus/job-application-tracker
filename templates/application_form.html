@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Add application' if mode == 'new' else 'Edit application' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+    <h1>{{ 'Add application' if mode == 'new' else 'Edit application' }}</h1>
+</div>
+
+<div class="card">
+{% if not jobs %}
+    <div class="empty">
+        <p>You need a job before you can add an application.</p>
+        <a class="btn" href="{{ url_for('job_new') }}">Add a job</a>
+    </div>
+{% else %}
+<form method="post" class="stacked" novalidate>
+    <div class="field">
+        <label for="job_id">Job <span class="req">*</span></label>
+        <select id="job_id" name="job_id" required>
+            <option value="">Select a job</option>
+            {% for j in jobs %}
+            <option value="{{ j.job_id }}" {{ 'selected' if (application.get('job_id') | string) == (j.job_id | string) }}>{{ j.job_title }} - {{ j.company_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-row">
+        <div class="field">
+            <label for="application_date">Application date <span class="req">*</span></label>
+            <input type="date" id="application_date" name="application_date" required value="{{ application.get('application_date') or '' }}">
+        </div>
+        <div class="field">
+            <label for="status">Status <span class="req">*</span></label>
+            <select id="status" name="status" required>
+                {% for s in statuses %}
+                <option value="{{ s }}" {{ 'selected' if application.get('status') == s }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="field">
+            <label for="resume_version">Resume version</label>
+            <input type="text" id="resume_version" name="resume_version" maxlength="50" placeholder="v3-dev" value="{{ application.get('resume_version') or '' }}">
+        </div>
+        <div class="field">
+            <label>&nbsp;</label>
+            <div class="check">
+                <input type="checkbox" id="cover_letter_sent" name="cover_letter_sent" {{ 'checked' if application.get('cover_letter_sent') }}>
+                <label for="cover_letter_sent">Cover letter sent</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="field">
+        <label>Interview rounds</label>
+        <div class="hint" style="margin-bottom:8px">Optional. Add one row for each interview or call. Empty rows are ignored.</div>
+        <div id="rounds">
+            {% for r in rounds %}
+            <div class="round">
+                <div class="round-grid">
+                    <input type="date" name="round_date" value="{{ r.date or '' }}" aria-label="Round date">
+                    <input type="text" name="round_type" maxlength="50" placeholder="Type (phone screen, technical...)" value="{{ r.type or '' }}" aria-label="Round type">
+                    <input type="text" name="round_interviewer" maxlength="100" placeholder="Interviewer" value="{{ r.interviewer or '' }}" aria-label="Interviewer">
+                </div>
+                <textarea name="round_notes" rows="2" maxlength="1000" placeholder="Notes" aria-label="Round notes">{{ r.notes or '' }}</textarea>
+                <button type="button" class="btn btn-danger btn-sm remove-round" style="margin-top:8px">Remove round</button>
+            </div>
+            {% endfor %}
+        </div>
+        <button type="button" class="btn btn-light btn-sm" id="add-round">+ Add round</button>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn">{{ 'Add application' if mode == 'new' else 'Save changes' }}</button>
+        <a class="btn btn-light" href="{{ url_for('applications') }}">Cancel</a>
+    </div>
+</form>
+
+<template id="round-template">
+    <div class="round">
+        <div class="round-grid">
+            <input type="date" name="round_date" aria-label="Round date">
+            <input type="text" name="round_type" maxlength="50" placeholder="Type (phone screen, technical...)" aria-label="Round type">
+            <input type="text" name="round_interviewer" maxlength="100" placeholder="Interviewer" aria-label="Interviewer">
+        </div>
+        <textarea name="round_notes" rows="2" maxlength="1000" placeholder="Notes" aria-label="Round notes"></textarea>
+        <button type="button" class="btn btn-danger btn-sm remove-round" style="margin-top:8px">Remove round</button>
+    </div>
+</template>
+
+<script>
+    const roundsBox = document.getElementById('rounds');
+    document.getElementById('add-round').addEventListener('click', function () {
+        const tpl = document.getElementById('round-template');
+        roundsBox.appendChild(tpl.content.cloneNode(true));
+    });
+    roundsBox.addEventListener('click', function (event) {
+        if (event.target.classList.contains('remove-round')) {
+            event.target.closest('.round').remove();
+        }
+    });
+</script>
+{% endif %}
+</div>
+{% endblock %}

@@ -189,3 +189,59 @@ def delete_job(job_id):
     """Delete a job; its applications cascade."""
     _, count = execute("DELETE FROM jobs WHERE job_id = %s", (job_id,))
     return count > 0
+
+
+# ------------------------------------------------------------- applications
+
+APPLICATION_SELECT = """SELECT a.*, j.job_title, j.company_id, c.company_name
+    FROM applications a
+    JOIN jobs j ON j.job_id = a.job_id
+    JOIN companies c ON c.company_id = j.company_id"""
+
+
+def _decode_application(row):
+    row["interview_data"] = decode_json(row.get("interview_data"), None)
+    return row
+
+
+def get_applications(status=None):
+    """All applications, newest first, optionally filtered by status."""
+    if status:
+        rows = query_all(
+            APPLICATION_SELECT + " WHERE a.status = %s ORDER BY a.application_date DESC, a.application_id DESC",
+            (status,),
+        )
+    else:
+        rows = query_all(APPLICATION_SELECT + " ORDER BY a.application_date DESC, a.application_id DESC")
+    return [_decode_application(r) for r in rows]
+
+
+def get_application(application_id):
+    row = query_one(APPLICATION_SELECT + " WHERE a.application_id = %s", (application_id,))
+    return _decode_application(row) if row else None
+
+
+def create_application(data):
+    new_id, _ = execute(
+        """INSERT INTO applications (job_id, application_date, status, resume_version,
+                                     cover_letter_sent, interview_data)
+           VALUES (%s, %s, %s, %s, %s, %s)""",
+        (data["job_id"], data["application_date"], data["status"], data["resume_version"],
+         data["cover_letter_sent"], encode_json(data["interview_data"])),
+    )
+    return new_id
+
+
+def update_application(application_id, data):
+    execute(
+        """UPDATE applications SET job_id = %s, application_date = %s, status = %s,
+                  resume_version = %s, cover_letter_sent = %s, interview_data = %s
+           WHERE application_id = %s""",
+        (data["job_id"], data["application_date"], data["status"], data["resume_version"],
+         data["cover_letter_sent"], encode_json(data["interview_data"]), application_id),
+    )
+
+
+def delete_application(application_id):
+    _, count = execute("DELETE FROM applications WHERE application_id = %s", (application_id,))
+    return count > 0

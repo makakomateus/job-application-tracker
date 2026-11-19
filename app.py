@@ -280,5 +280,136 @@ def job_delete(job_id):
     return redirect(url_for("jobs"))
 
 
+# ------------------------------------------------------------ applications
+
+STATUSES = ["Applied", "Screening", "Interview", "Offer", "Rejected", "Withdrawn"]
+
+
+def get_job_id(form, errors):
+    raw = (form.get("job_id") or "").strip()
+    if not raw.isdigit():
+        errors.append("Job is required.")
+        return None
+    job_id = int(raw)
+    if db.get_job(job_id) is None:
+        errors.append("The selected job does not exist.")
+        return None
+    return job_id
+
+
+def read_rounds(form):
+    """Collect the repeated interview round fields into a list of dicts."""
+    dates = form.getlist("round_date")
+    types = form.getlist("round_type")
+    people = form.getlist("round_interviewer")
+    notes = form.getlist("round_notes")
+    rounds = []
+    for i in range(len(dates)):
+        rounds.append({
+            "date": dates[i].strip(),
+            "type": types[i].strip() if i < len(types) else "",
+            "interviewer": people[i].strip() if i < len(people) else "",
+            "notes": notes[i].strip() if i < len(notes) else "",
+        })
+    return rounds
+
+
+def validate_rounds(rounds, errors):
+    """Drop empty rounds and check the rest; returns the cleaned list."""
+    cleaned = []
+    for number, rnd in enumerate(rounds, start=1):
+        if not any(rnd.values()):
+            continue
+        if rnd["date"]:
+            try:
+                datetime.strptime(rnd["date"], "%Y-%m-%d")
+            except ValueError:
+                errors.append(f"Interview round {number}: date is not valid.")
+        if len(rnd["type"]) > 50:
+            errors.append(f"Interview round {number}: type must be 50 characters or fewer.")
+        if len(rnd["interviewer"]) > 100:
+            errors.append(f"Interview round {number}: interviewer must be 100 characters or fewer.")
+        if len(rnd["notes"]) > 1000:
+            errors.append(f"Interview round {number}: notes must be 1000 characters or fewer.")
+        cleaned.append(rnd)
+    return cleaned
+
+
+def parse_application_form(form):
+    errors = []
+    rounds = validate_rounds(read_rounds(form), errors)
+    data = {
+        "job_id": get_job_id(form, errors),
+        "application_date": get_date(form, "application_date", "Application date", errors, required=True),
+        "status": get_choice(form, "status", "Status", STATUSES, errors, required=True),
+        "resume_version": get_text(form, "resume_version", "Resume version", 50, errors),
+        "cover_letter_sent": form.get("cover_letter_sent") == "on",
+        "interview_data": {"rounds": rounds} if rounds else None,
+    }
+    return data, errors
+
+
+def application_form_context(application, rounds, mode, application_id=None):
+    return dict(section="applications", application=application, rounds=rounds, mode=mode,
+                application_id=application_id, jobs=db.job_choices(), statuses=STATUSES)
+
+
+@app.route("/applications")
+def applications():
+    status = request.args.get("status", "")
+    if status not in STATUSES:
+        status = ""
+    return render_template("applications.html", section="applications",
+                           applications=db.get_applications(status or None),
+                           statuses=STATUSES, current_status=status)
+
+
+@app.route("/applications/<int:application_id>")
+def application_detail(application_id):
+    application = or_404(db.get_application(application_id))
+    return render_template("application_detail.html", section="applications", application=application)
+
+
+@app.route("/applications/new", methods=["GET", "POST"])
+def application_new():
+    if request.method == "POST":
+        data, errors = parse_application_form(request.form)
+        if errors:
+            flash_errors(errors)
+            return render_template("application_form.html", **application_form_context(
+                request.form, read_rounds(request.form), "new"))
+        db.create_application(data)
+        flash("Application was added.", "success")
+        return redirect(url_for("applications"))
+    preset = {"application_date": date.today().isoformat(), "status": "Applied",
+              "job_id": request.args.get("job_id", type=int)}
+    return render_template("application_form.html", **application_form_context(preset, [], "new"))
+
+
+@app.route("/applications/<int:application_id>/edit", methods=["GET", "POST"])
+def application_edit(application_id):
+    application = or_404(db.get_application(application_id))
+    if request.method == "POST":
+        data, errors = parse_application_form(request.form)
+        if errors:
+            flash_errors(errors)
+            return render_template("application_form.html", **application_form_context(
+                request.form, read_rounds(request.form), "edit", application_id))
+        db.update_application(application_id, data)
+        flash("Application was updated.", "success")
+        return redirect(url_for("applications"))
+    rounds = (application["interview_data"] or {}).get("rounds", [])
+    return render_template("application_form.html", **application_form_context(
+        application, rounds, "edit", application_id))
+
+
+@app.route("/applications/<int:application_id>/delete", methods=["POST"])
+def application_delete(application_id):
+    or_404(db.get_application(application_id))
+    db.delete_application(application_id)
+    flash("Application was deleted.", "success")
+    return redirect(url_for("applications"))
+
+
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import delete_button, status_badge %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Applications</h1>
+        <p class="subtitle">{{ applications|length }} application{{ '' if applications|length == 1 else 's' }}{% if current_status %} with status {{ current_status }}{% endif %}</p>
+    </div>
+    <div class="actions">
+        <form method="get" action="{{ url_for('applications') }}">
+            <select name="status" onchange="this.form.submit()" aria-label="Filter by status">
+                <option value="">All statuses</option>
+                {% for s in statuses %}
+                <option value="{{ s }}" {{ 'selected' if s == current_status }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <a class="btn" href="{{ url_for('application_new') }}">+ Add application</a>
+    </div>
+</div>
+
+<div class="card">
+{% if applications %}
+    <div class="table-wrap">
+    <table>
+        <thead>
+            <tr><th>Job</th><th>Applied</th><th>Status</th><th>Resume</th><th>Cover letter</th><th>Interviews</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+        {% for a in applications %}
+            {% set rounds = (a.interview_data or {}).get('rounds', []) %}
+            <tr>
+                <td><a href="{{ url_for('application_detail', application_id=a.application_id) }}"><strong>{{ a.job_title }}</strong></a><br>
+                    <span class="muted small">{{ a.company_name }}</span></td>
+                <td class="small">{{ a.application_date }}</td>
+                <td>{{ status_badge(a.status) }}</td>
+                <td class="small">{{ a.resume_version or '-' }}</td>
+                <td class="small">{{ 'Yes' if a.cover_letter_sent else 'No' }}</td>
+                <td class="small">
+                    {% if rounds %}
+                        {{ rounds|length }} round{{ '' if rounds|length == 1 else 's' }}<br>
+                        <span class="muted">Last: {{ rounds[-1].type or 'Interview' }}{% if rounds[-1].date %} ({{ rounds[-1].date }}){% endif %}</span>
+                    {% else %}<span class="muted">None</span>{% endif %}
+                </td>
+                <td class="actions">
+                    <a class="btn btn-light btn-sm" href="{{ url_for('application_edit', application_id=a.application_id) }}">Edit</a>
+                    {{ delete_button(url_for('application_delete', application_id=a.application_id),
+                        'Delete your application for ' ~ a.job_title ~ ' at ' ~ a.company_name ~ '? This cannot be undone.') }}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+{% else %}
+    <div class="empty">
+        <p>{% if current_status %}No applications with that status.{% else %}No applications yet.{% endif %}</p>
+        <a class="btn" href="{{ url_for('application_new') }}">Add an application</a>
+    </div>
+{% endif %}
+</div>
+{% endblock %}
