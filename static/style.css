@@ -166,7 +166,7 @@ form.stacked { max-width: 760px; }
 .field .hint { color: var(--muted); font-size: 0.8rem; margin-top: 3px; }
 .req { color: var(--danger); }
 input[type=text], input[type=email], input[type=url], input[type=number],
-input[type=date], select, textarea {
+input[type=date], input[type=datetime-local], select, textarea {
     width: 100%;
     padding: 9px 11px;
     border: 1px solid #cbd5e1;

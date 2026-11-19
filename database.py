@@ -182,24 +182,25 @@ def job_choices():
 
 def create_job(data):
     new_id, _ = execute(
-        """INSERT INTO jobs (company_id, job_title, job_type, salary_min, salary_max,
-                             job_url, date_posted, requirements)
-           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
-        (data["company_id"], data["job_title"], data["job_type"], data["salary_min"],
-         data["salary_max"], data["job_url"], data["date_posted"],
-         encode_json(data["requirements"])),
+        """INSERT INTO jobs (company_id, job_title, job_description, job_type, salary_min,
+                             salary_max, job_url, date_posted, is_active, requirements)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+        (data["company_id"], data["job_title"], data["job_description"], data["job_type"],
+         data["salary_min"], data["salary_max"], data["job_url"], data["date_posted"],
+         data["is_active"], encode_json(data["requirements"])),
     )
     return new_id
 
 
 def update_job(job_id, data):
     execute(
-        """UPDATE jobs SET company_id = %s, job_title = %s, job_type = %s, salary_min = %s,
-                  salary_max = %s, job_url = %s, date_posted = %s, requirements = %s
+        """UPDATE jobs SET company_id = %s, job_title = %s, job_description = %s, job_type = %s,
+                  salary_min = %s, salary_max = %s, job_url = %s, date_posted = %s,
+                  is_active = %s, requirements = %s
            WHERE job_id = %s""",
-        (data["company_id"], data["job_title"], data["job_type"], data["salary_min"],
-         data["salary_max"], data["job_url"], data["date_posted"],
-         encode_json(data["requirements"]), job_id),
+        (data["company_id"], data["job_title"], data["job_description"], data["job_type"],
+         data["salary_min"], data["salary_max"], data["job_url"], data["date_posted"],
+         data["is_active"], encode_json(data["requirements"]), job_id),
     )
 
 
@@ -242,10 +243,12 @@ def get_application(application_id):
 def create_application(data):
     new_id, _ = execute(
         """INSERT INTO applications (job_id, application_date, status, resume_version,
-                                     cover_letter_sent, interview_data)
-           VALUES (%s, %s, %s, %s, %s, %s)""",
+                                     cover_letter_sent, response_date, interview_date,
+                                     interview_data, notes)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
         (data["job_id"], data["application_date"], data["status"], data["resume_version"],
-         data["cover_letter_sent"], encode_json(data["interview_data"])),
+         data["cover_letter_sent"], data["response_date"], data["interview_date"],
+         encode_json(data["interview_data"]), data["notes"]),
     )
     return new_id
 
@@ -253,10 +256,12 @@ def create_application(data):
 def update_application(application_id, data):
     execute(
         """UPDATE applications SET job_id = %s, application_date = %s, status = %s,
-                  resume_version = %s, cover_letter_sent = %s, interview_data = %s
+                  resume_version = %s, cover_letter_sent = %s, response_date = %s,
+                  interview_date = %s, interview_data = %s, notes = %s
            WHERE application_id = %s""",
         (data["job_id"], data["application_date"], data["status"], data["resume_version"],
-         data["cover_letter_sent"], encode_json(data["interview_data"]), application_id),
+         data["cover_letter_sent"], data["response_date"], data["interview_date"],
+         encode_json(data["interview_data"]), data["notes"], application_id),
     )
 
 

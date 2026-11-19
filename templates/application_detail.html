@@ -22,6 +22,10 @@
         <dt>Status</dt><dd>{{ status_badge(application.status) }}</dd>
         <dt>Resume version</dt><dd>{{ application.resume_version or '-' }}</dd>
         <dt>Cover letter</dt><dd>{{ 'Sent' if application.cover_letter_sent else 'Not sent' }}</dd>
+        <dt>Response date</dt><dd>{{ application.response_date or '-' }}</dd>
+        <dt>Interview date</dt><dd>{{ application.interview_date.strftime('%Y-%m-%d %H:%M') if application.interview_date else '-' }}</dd>
+        <dt>Notes</dt><dd>{{ application.notes or '-' }}</dd>
+        <dt>Added</dt><dd>{{ application.created_at.strftime('%Y-%m-%d') if application.created_at else '-' }}</dd>
     </dl>
 </div>
 

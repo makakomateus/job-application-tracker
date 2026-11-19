@@ -50,6 +50,21 @@
         </div>
     </div>
 
+    <div class="form-row">
+        <div class="field">
+            <label for="response_date">Response date</label>
+            <input type="date" id="response_date" name="response_date" value="{{ application.get('response_date') or '' }}">
+        </div>
+        <div class="field">
+            <label for="interview_date">Interview date and time</label>
+            <input type="datetime-local" id="interview_date" name="interview_date" value="{{ application.get('interview_date') or '' }}">
+        </div>
+    </div>
+    <div class="field">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="3" maxlength="5000">{{ application.get('notes') or '' }}</textarea>
+    </div>
+
     <div class="field">
         <label>Interview rounds</label>
         <div class="hint" style="margin-bottom:8px">Optional. Add one row for each interview or call. Empty rows are ignored.</div>

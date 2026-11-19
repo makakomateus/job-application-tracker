@@ -58,6 +58,20 @@ def get_date(form, name, label, errors, required=False):
         return None
 
 
+def get_datetime(form, name, label, errors):
+    """Parse an optional datetime-local field (YYYY-MM-DDTHH:MM) and return a datetime or None."""
+    raw = (form.get(name) or "").strip()
+    if not raw:
+        return None
+    for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return datetime.strptime(raw, fmt)
+        except ValueError:
+            continue
+    errors.append(f"{label} must be a valid date and time.")
+    return None
+
+
 def get_int(form, name, label, errors, minimum=0):
     """Parse an optional non-negative integer field."""
     raw = (form.get(name) or "").strip()
@@ -217,11 +231,13 @@ def parse_job_form(form):
     data = {
         "company_id": get_company_id(form, errors),
         "job_title": get_text(form, "job_title", "Job title", 100, errors, required=True),
+        "job_description": get_text(form, "job_description", "Job description", 5000, errors),
         "job_type": get_choice(form, "job_type", "Job type", JOB_TYPES, errors),
         "salary_min": get_int(form, "salary_min", "Minimum salary", errors),
         "salary_max": get_int(form, "salary_max", "Maximum salary", errors),
         "job_url": get_url(form, "job_url", "Job URL", 300, errors),
         "date_posted": get_date(form, "date_posted", "Date posted", errors),
+        "is_active": form.get("is_active") == "on",
         "requirements": split_skills(form.get("requirements")),
     }
     low, high = data["salary_min"], data["salary_max"]
@@ -260,7 +276,7 @@ def job_new():
         db.create_job(data)
         flash(f"Job '{data['job_title']}' was added.", "success")
         return redirect(url_for("jobs"))
-    preset = {"company_id": request.args.get("company_id", type=int)}
+    preset = {"company_id": request.args.get("company_id", type=int), "is_active": True}
     return render_template("job_form.html", **job_form_context(preset, "new"))
 
 
@@ -351,7 +367,10 @@ def parse_application_form(form):
         "status": get_choice(form, "status", "Status", STATUSES, errors, required=True),
         "resume_version": get_text(form, "resume_version", "Resume version", 50, errors),
         "cover_letter_sent": form.get("cover_letter_sent") == "on",
+        "response_date": get_date(form, "response_date", "Response date", errors),
+        "interview_date": get_datetime(form, "interview_date", "Interview date", errors),
         "interview_data": {"rounds": rounds} if rounds else None,
+        "notes": get_text(form, "notes", "Notes", 5000, errors),
     }
     return data, errors
 
@@ -406,6 +425,9 @@ def application_edit(application_id):
         flash("Application was updated.", "success")
         return redirect(url_for("applications"))
     rounds = (application["interview_data"] or {}).get("rounds", [])
+    if application["interview_date"]:
+        # datetime-local inputs want YYYY-MM-DDTHH:MM
+        application["interview_date"] = application["interview_date"].strftime("%Y-%m-%dT%H:%M")
     return render_template("application_form.html", **application_form_context(
         application, rounds, "edit", application_id))
 

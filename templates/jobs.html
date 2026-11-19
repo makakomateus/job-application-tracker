@@ -20,7 +20,7 @@
         <tbody>
         {% for j in jobs %}
             <tr>
-                <td><a href="{{ url_for('job_detail', job_id=j.job_id) }}"><strong>{{ j.job_title }}</strong></a><br>
+                <td><a href="{{ url_for('job_detail', job_id=j.job_id) }}"><strong>{{ j.job_title }}</strong></a>{% if not j.is_active %} <span class="badge badge-withdrawn">Inactive</span>{% endif %}<br>
                     <span class="muted small">{{ j.company_name }}</span></td>
                 <td>{% if j.job_type %}<span class="badge badge-type">{{ j.job_type }}</span>{% else %}-{% endif %}</td>
                 <td class="small">{{ money(j.salary_min) }} - {{ money(j.salary_max) }}</td>
