@@ -29,6 +29,7 @@ Some design choices came from the AI and I kept them:
 - Job Match is a plain function in `matching.py` that doesn't touch the database, so it has unit tests in `tests/test_job_match.py`. It ranks by percentage, then by number of matched skills, and puts jobs with no requirements last.
 - Foreign keys use `ON DELETE CASCADE`, and the delete button on a company shows a `confirm()` warning that its jobs, applications and contacts go too.
 - `salary_min <= salary_max` is checked both in the database (a CHECK) and in the app.
+- The demo video was recorded by the agent too. It drove OBS, the terminals and a clean browser window (so no autofill popped up), and I watched the result after.
 
 It also tested its own work with an end-to-end script that created, edited and deleted rows in all 4 tables, triggered the validation errors, checked the cascade delete, and checked Job Match. For example "python, SQL, FLASK" gave Software Developer 100% (3/3), and "sql, excel" gave Data Analyst 67% (2/3) with Tableau missing. It also cloned the repo fresh and followed the README to make sure the setup steps work.
 
@@ -40,9 +41,9 @@ When git had no name or email set, the agent stopped and asked me instead of gue
 - MySQL. It wasn't installed on my computer, so for development the project runs MySQL 8.4 in a Docker container. The README still works with a normal MySQL install.
 - Docker crash. Docker Desktop kept crashing on startup because the Claude app runs in a Windows app sandbox with a virtualized AppData folder, which broke Docker's socket file. The fix was starting Docker Desktop outside the sandbox (through a WMI process create), and then it worked.
 - Wrong package version. The AI pinned `mysql-connector-python` to 9.4.0 from memory, but the version actually installed was 26.10.0. This was caught before the commit and `requirements.txt` was fixed using `pip freeze`.
-- Windows path bug. A helper script used a Git Bash style `/c/...` path that Windows Python couldn't read, so one route silently didn't get added. I found it because the nav link threw a `url_for` BuildError. It was fixed with a normal Windows path.
-- Review pass. A second agent reviewed the code and the UI and fixed some small issues.
-- Docs. I had the README and this file rewritten in plainer wording, and I checked the setup commands against what actually runs.
+- Windows path bug. A helper script used a Git Bash style `/c/...` path that Windows Python couldn't read, so one route silently didn't get added. It got caught because the nav link threw a `url_for` BuildError. It was fixed with a normal Windows path.
+- Review pass. A second agent went through every page and the code. It didn't find logic or security bugs, but it fixed the Edit/Delete buttons breaking the table row lines and made the "n/a" on jobs with no requirements grey instead of red so it doesn't look like a 0% score.
+- Docs. I had the README and this file rewritten in plainer wording, and the setup steps were tested on a fresh clone.
 
 ## Lessons Learned
 
