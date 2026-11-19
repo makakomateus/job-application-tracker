@@ -1,4 +1,6 @@
 -- Job Application Tracker schema and sample data
+-- Tables started from Assignment 2 and updated to match the project spec
+-- (JSON columns, ENUM columns). Indexes are from Assignment 3.
 DROP DATABASE IF EXISTS job_tracker;
 CREATE DATABASE job_tracker CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE job_tracker;
@@ -10,19 +12,23 @@ CREATE TABLE companies (
     website      VARCHAR(200),
     city         VARCHAR(50),
     state        VARCHAR(50),
-    notes        TEXT
+    notes        TEXT,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE jobs (
-    job_id       INT AUTO_INCREMENT PRIMARY KEY,
-    company_id   INT NOT NULL,
-    job_title    VARCHAR(100) NOT NULL,
-    job_type     ENUM('Full-time','Part-time','Contract','Internship'),
-    salary_min   INT,
-    salary_max   INT,
-    job_url      VARCHAR(300),
-    date_posted  DATE,
-    requirements JSON,
+    job_id          INT AUTO_INCREMENT PRIMARY KEY,
+    company_id      INT NOT NULL,
+    job_title       VARCHAR(100) NOT NULL,
+    job_description TEXT,
+    job_type        ENUM('Full-time','Part-time','Contract','Internship'),
+    salary_min      INT,
+    salary_max      INT,
+    job_url         VARCHAR(300),
+    date_posted     DATE,
+    is_active       BOOLEAN DEFAULT TRUE,
+    requirements    JSON,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_jobs_company FOREIGN KEY (company_id)
         REFERENCES companies (company_id) ON DELETE CASCADE,
     CONSTRAINT chk_salary_range CHECK (salary_min IS NULL OR salary_max IS NULL OR salary_min <= salary_max)
@@ -35,7 +41,11 @@ CREATE TABLE applications (
     status            ENUM('Applied','Screening','Interview','Offer','Rejected','Withdrawn') DEFAULT 'Applied',
     resume_version    VARCHAR(50),
     cover_letter_sent BOOLEAN DEFAULT FALSE,
+    response_date     DATE,
+    interview_date    DATETIME,
     interview_data    JSON,
+    notes             TEXT,
+    created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_applications_job FOREIGN KEY (job_id)
         REFERENCES jobs (job_id) ON DELETE CASCADE
 );
@@ -49,48 +59,83 @@ CREATE TABLE contacts (
     phone        VARCHAR(20),
     linkedin_url VARCHAR(200),
     notes        TEXT,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_contacts_company FOREIGN KEY (company_id)
         REFERENCES companies (company_id) ON DELETE CASCADE
 );
 
+-- Indexes from Assignment 3 (idx_salary was dropped in that assignment, so it is not here)
+CREATE INDEX idx_job_title ON jobs(job_title);
+CREATE INDEX idx_company_type ON jobs(company_id, job_type);
+CREATE INDEX idx_app_status ON applications(status);
+CREATE INDEX idx_company_industry ON companies(industry);
+
+-- Sample data: the Assignment 2 companies, plus New Tech Corp from the
+-- Assignment 4 transaction (that one was committed). Websites start with
+-- https:// because the web form requires it.
 INSERT INTO companies (company_name, industry, website, city, state, notes) VALUES
-('TechCorp', 'Software', 'https://www.techcorp.example.com', 'Miami', 'Florida', 'Mid-size product company. Referred by a classmate.'),
-('DataCo', 'Data Analytics', 'https://www.dataco.example.com', 'Orlando', 'Florida', 'Analytics consultancy with a hybrid schedule.'),
-('CloudNine Systems', 'Cloud Services', 'https://www.cloudnine.example.com', 'Austin', 'Texas', 'Remote-friendly, large engineering team.'),
-('Sunshine Health', 'Healthcare IT', 'https://www.sunshinehealth.example.com', 'Tampa', 'Florida', 'Internal tools team, good intern program.'),
-('Greenleaf Finance', 'Fintech', 'https://www.greenleaf.example.com', 'Atlanta', 'Georgia', 'Startup, fast hiring process.'),
-('PixelForge Studios', 'Media', 'https://www.pixelforge.example.com', 'Denver', 'Colorado', 'Web and design agency.');
+('Tech Solutions Inc', 'Technology', 'https://www.techsolutions.com', 'Miami', 'Florida', NULL),
+('Data Analytics Corp', 'Data Science', 'https://www.dataanalytics.com', 'Austin', 'Texas', NULL),
+('Cloud Systems LLC', 'Cloud Computing', 'https://www.cloudsystems.com', 'Seattle', 'Washington', NULL),
+('Digital Innovations', 'Software', 'https://www.digitalinnovations.com', 'San Francisco', 'California', 'Applied to Senior Developer position on 2025-01-20'),
+('Smart Tech Group', 'AI/ML', 'https://www.smarttech.com', 'Boston', 'Massachusetts', NULL),
+('New Tech Corp', 'Technology', NULL, 'Denver', 'Colorado', NULL);
 
-INSERT INTO jobs (company_id, job_title, job_type, salary_min, salary_max, job_url, date_posted, requirements) VALUES
-(1, 'Software Developer', 'Full-time', 75000, 95000, 'https://www.techcorp.example.com/careers/101', '2026-10-01', '["Python","SQL","Flask"]'),
-(1, 'QA Automation Intern', 'Internship', 20000, 26000, 'https://www.techcorp.example.com/careers/102', '2026-10-05', '["Python","Selenium","Git"]'),
-(2, 'Data Analyst', 'Full-time', 65000, 80000, 'https://www.dataco.example.com/jobs/21', '2026-09-28', '["SQL","Excel","Tableau"]'),
-(2, 'Junior Data Engineer', 'Full-time', 80000, 100000, 'https://www.dataco.example.com/jobs/22', '2026-10-10', '["Python","SQL","Airflow","AWS"]'),
-(3, 'Cloud Support Associate', 'Full-time', 60000, 72000, 'https://www.cloudnine.example.com/careers/330', '2026-10-12', '["Linux","AWS","Networking","Bash"]'),
-(3, 'DevOps Contractor', 'Contract', 90000, 120000, 'https://www.cloudnine.example.com/careers/331', '2026-10-15', '["Docker","Linux","Git","AWS"]'),
-(4, 'IT Help Desk Intern', 'Internship', 18000, 22000, 'https://www.sunshinehealth.example.com/intern/7', '2026-10-03', '["Networking","Windows","Customer Service"]'),
-(5, 'Backend Developer', 'Full-time', 85000, 110000, 'https://www.greenleaf.example.com/jobs/55', '2026-10-08', '["Python","Flask","MySQL","REST APIs","Git"]'),
-(6, 'Front-End Developer', 'Part-time', 35000, 48000, 'https://www.pixelforge.example.com/jobs/9', '2026-10-14', '["HTML","CSS","JavaScript"]'),
-(6, 'Technical Writer', 'Contract', 50000, 62000, 'https://www.pixelforge.example.com/jobs/10', '2026-10-16', '[]');
+-- Jobs: 7 from Assignment 2, 10 from Assignment 3, and the Software Architect
+-- job from Assignment 4. Requirements and descriptions are added for the project.
+INSERT INTO jobs (company_id, job_title, job_description, job_type, salary_min, salary_max, job_url, date_posted, requirements) VALUES
+(1, 'Software Developer', 'Build and maintain web features for the company product using Python and Flask.', 'Full-time', 70000, 90000, 'https://www.techsolutions.com/careers/1', '2025-01-15', '["Python","SQL","Flask"]'),
+(1, 'Database Administrator', 'Maintain MySQL databases, run backups and tune slow queries.', 'Full-time', 75000, 95000, 'https://www.techsolutions.com/careers/2', '2025-01-10', '["MySQL","SQL","Backup and Recovery","Indexing"]'),
+(2, 'Data Analyst', 'Turn raw data into weekly reports and dashboards for the business team.', 'Full-time', 65000, 85000, 'https://www.dataanalytics.com/jobs/3', '2025-01-12', '["SQL","Excel","Tableau"]'),
+(3, 'Cloud Engineer', 'Deploy and monitor services on the cloud platform.', 'Full-time', 80000, 100000, 'https://www.cloudsystems.com/careers/4', '2025-01-08', '["AWS","Linux","Docker","Networking"]'),
+(4, 'Junior Developer', 'Entry level role fixing bugs and building small features with a senior mentor.', 'Full-time', 55000, 70000, 'https://www.digitalinnovations.com/jobs/5', '2025-01-14', '["Python","JavaScript","Git"]'),
+(4, 'Senior Developer', 'Lead feature design and review code for the engineering team.', 'Full-time', 95000, 120000, 'https://www.digitalinnovations.com/jobs/6', '2025-01-14', '["Python","SQL","Git","REST APIs","System Design"]'),
+(5, 'ML Engineer', 'Train and deploy machine learning models for customer products.', 'Full-time', 90000, 115000, 'https://www.smarttech.com/careers/7', '2025-01-11', '["Python","TensorFlow","SQL","Statistics"]'),
+(1, 'QA Engineer', 'Write test plans and automated tests for each release.', 'Full-time', 60000, 80000, 'https://www.techsolutions.com/careers/8', '2025-01-05', '["Selenium","Python","Test Planning"]'),
+(2, 'Business Analyst', 'Gather requirements from stakeholders and report on results.', 'Full-time', 65000, 85000, 'https://www.dataanalytics.com/jobs/9', '2025-01-06', '["SQL","Excel","Requirements Gathering"]'),
+(2, 'Data Scientist', 'Build predictive models and present findings to clients.', 'Full-time', 85000, 110000, 'https://www.dataanalytics.com/jobs/10', '2025-01-07', '["Python","Pandas","Statistics","Machine Learning"]'),
+(3, 'DevOps Engineer', 'Automate builds and deployments for the engineering teams.', 'Full-time', 80000, 105000, 'https://www.cloudsystems.com/careers/11', '2025-01-08', '["Docker","Linux","CI/CD","AWS"]'),
+(3, 'Security Analyst', 'Watch for threats, review alerts and respond to incidents.', 'Full-time', 75000, 95000, 'https://www.cloudsystems.com/careers/12', '2025-01-09', '["Networking","Linux","SIEM","Incident Response"]'),
+(4, 'UI/UX Designer', 'Design screens and prototypes for the web products.', 'Full-time', 60000, 80000, 'https://www.digitalinnovations.com/jobs/13', '2025-01-10', '["Figma","HTML","CSS"]'),
+(5, 'Product Manager', 'Own the product roadmap and work with engineering and customers.', 'Full-time', 90000, 120000, 'https://www.smarttech.com/careers/14', '2025-01-11', '["Roadmapping","Agile","Communication"]'),
+(1, 'Technical Writer', 'Write user guides and internal documentation.', 'Contract', 55000, 75000, 'https://www.techsolutions.com/careers/15', '2025-01-12', '["Technical Writing","Markdown","Git"]'),
+(2, 'Intern - Data', 'Support the analytics team with data cleaning and simple reports.', 'Internship', 30000, 40000, 'https://www.dataanalytics.com/jobs/16', '2025-01-13', '["SQL","Excel","Python"]'),
+(4, 'Intern - Development', 'Help the developers with small tasks and testing.', 'Internship', 32000, 42000, 'https://www.digitalinnovations.com/jobs/17', '2025-01-14', '["Python","Git","HTML"]'),
+(6, 'Software Architect', 'Design the overall system structure and guide the technical direction.', 'Full-time', 120000, 150000, NULL, NULL, '["System Design","Python","AWS","SQL"]');
 
-INSERT INTO applications (job_id, application_date, status, resume_version, cover_letter_sent, interview_data) VALUES
-(1, '2026-10-02', 'Interview', 'v3-dev', TRUE, '{"rounds":[{"date":"2026-10-09","type":"Phone screen","interviewer":"Dana Reyes","notes":"Asked about Flask projects."},{"date":"2026-10-20","type":"Technical","interviewer":"Sam Patel","notes":"Live SQL and Python exercise."}]}'),
-(2, '2026-10-06', 'Applied', 'v3-dev', FALSE, NULL),
-(3, '2026-09-30', 'Rejected', 'v2-data', TRUE, '{"rounds":[{"date":"2026-10-07","type":"Phone screen","interviewer":"Priya Nair","notes":"Position filled internally."}]}'),
-(4, '2026-10-11', 'Screening', 'v3-dev', TRUE, '{"rounds":[{"date":"2026-10-22","type":"Recruiter call","interviewer":"Lena Ortiz","notes":"Salary range confirmed."}]}'),
-(5, '2026-10-13', 'Applied', 'v1-it', FALSE, NULL),
-(6, '2026-10-16', 'Withdrawn', 'v3-dev', FALSE, NULL),
-(7, '2026-10-04', 'Offer', 'v1-it', TRUE, '{"rounds":[{"date":"2026-10-12","type":"On-site","interviewer":"Marcus Webb","notes":"Met the help desk team."},{"date":"2026-10-19","type":"Manager interview","interviewer":"Alicia Gomez","notes":"Offer extended verbally."}]}'),
-(8, '2026-10-09', 'Interview', 'v3-dev', TRUE, '{"rounds":[{"date":"2026-11-25","type":"Technical","interviewer":"Chris Doyle","notes":"Prepare REST API design questions."}]}'),
-(9, '2026-10-15', 'Screening', 'v4-web', TRUE, NULL),
-(10, '2026-10-17', 'Applied', 'v2-data', FALSE, NULL);
+-- Applications: the 5 from Assignment 2 with the status changes made in
+-- Assignments 2, 4 and 5 that were committed, plus the one from the Assignment 4
+-- workflow (job 6). Status names are mapped to the project's ENUM
+-- (Phone Screen -> Screening, Interview Completed -> Interview,
+-- Offer Accepted -> Offer). Applications 7, 8 and 9 were added so every status is used.
+INSERT INTO applications (job_id, application_date, status, resume_version, cover_letter_sent, response_date, interview_date, interview_data, notes) VALUES
+(1, '2025-01-16', 'Offer', 'v2.1', TRUE, '2025-02-03', '2025-01-27 14:00:00',
+    '{"rounds":[{"date":"2025-01-21","type":"Phone screen","interviewer":"Sarah Johnson","notes":"Asked about Flask projects."},{"date":"2025-01-27","type":"Technical","interviewer":"Sarah Johnson","notes":"Live SQL and Python exercise."}]}',
+    'Offer accepted.'),
+(3, '2025-01-13', 'Interview', 'v2.1', TRUE, '2025-01-17', '2025-01-20 10:30:00',
+    '{"rounds":[{"date":"2025-01-20","type":"Video interview","interviewer":"Michael Chen","notes":"Talked through a sample dashboard."}]}',
+    'Interview completed, waiting to hear back.'),
+(4, '2025-01-09', 'Interview', 'v2.0', FALSE, '2025-01-14', '2025-01-16 09:00:00',
+    '{"rounds":[{"date":"2025-01-16","type":"Video interview","interviewer":"Emily Williams","notes":"Questions about AWS and Linux basics."}]}',
+    NULL),
+(5, '2025-01-15', 'Applied', 'v2.1', TRUE, NULL, NULL, NULL, NULL),
+(7, '2025-01-12', 'Screening', 'v2.1', TRUE, '2025-01-16', '2025-01-18 15:00:00',
+    '{"rounds":[{"date":"2025-01-18","type":"Phone screen","interviewer":"Lisa Garcia","notes":"Short call about Python and machine learning projects."}]}',
+    NULL),
+(6, '2025-01-20', 'Applied', 'v3.0', TRUE, NULL, NULL, NULL, NULL),
+(2, '2025-01-11', 'Rejected', 'v2.0', FALSE, '2025-01-22', NULL, NULL, 'Position filled internally.'),
+(8, '2025-01-14', 'Withdrawn', 'v2.1', FALSE, NULL, NULL, NULL, 'Withdrew after accepting the Software Developer offer.'),
+(10, '2026-11-12', 'Interview', 'v3.0', TRUE, '2026-11-17', '2026-12-03 13:00:00',
+    '{"rounds":[{"date":"2026-11-18","type":"Phone screen","interviewer":"Michael Chen","notes":"Went well."},{"date":"2026-12-03","type":"Technical","interviewer":"Michael Chen","notes":"Prepare a Pandas exercise and statistics review."}]}',
+    'Second round scheduled.');
 
-INSERT INTO contacts (company_id, contact_name, title, email, phone, linkedin_url, notes) VALUES
-(1, 'Dana Reyes', 'Technical Recruiter', 'dana.reyes@techcorp.example.com', '305-555-0142', 'https://www.linkedin.com/in/danareyes-example', 'Main recruiting contact.'),
-(1, 'Sam Patel', 'Engineering Manager', 'sam.patel@techcorp.example.com', '305-555-0177', 'https://www.linkedin.com/in/sampatel-example', 'Runs the technical round.'),
-(2, 'Priya Nair', 'HR Coordinator', 'priya.nair@dataco.example.com', '407-555-0119', NULL, 'Prefers email.'),
-(2, 'Lena Ortiz', 'Senior Recruiter', 'lena.ortiz@dataco.example.com', '407-555-0160', 'https://www.linkedin.com/in/lenaortiz-example', NULL),
-(3, 'Omar Haddad', 'Hiring Manager', 'omar.haddad@cloudnine.example.com', '512-555-0133', NULL, 'Met at the FIU career fair.'),
-(4, 'Marcus Webb', 'IT Director', 'marcus.webb@sunshinehealth.example.com', '813-555-0188', 'https://www.linkedin.com/in/marcuswebb-example', 'Gave the verbal offer.'),
-(5, 'Chris Doyle', 'Lead Engineer', 'chris.doyle@greenleaf.example.com', '404-555-0101', NULL, NULL),
-(6, 'Jules Martin', 'Creative Producer', 'jules.martin@pixelforge.example.com', '303-555-0155', NULL, 'Posted the technical writer role.');
+-- Contacts: the 5 from Assignment 2 (first and last name joined into contact_name,
+-- job_title stored as title) plus Robert Kim from the Assignment 4 workflow.
+-- Jennifer Martinez was rolled back in that assignment, so she is not here.
+INSERT INTO contacts (company_id, contact_name, title, email) VALUES
+(1, 'Sarah Johnson', 'HR Manager', 'sjohnson@techsolutions.com'),
+(2, 'Michael Chen', 'Technical Recruiter', 'mchen@dataanalytics.com'),
+(3, 'Emily Williams', 'Hiring Manager', 'ewilliams@cloudsystems.com'),
+(4, 'David Brown', 'Senior Developer', NULL),
+(5, 'Lisa Garcia', 'Talent Acquisition', 'lgarcia@smarttech.com'),
+(4, 'Robert Kim', 'Engineering Manager', 'rkim@digitalinnovations.com');
