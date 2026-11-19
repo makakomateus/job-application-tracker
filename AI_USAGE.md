@@ -17,6 +17,7 @@ These are roughly what I typed, shortened a bit.
 5. I asked for the README and docs to be written in plain, normal language and not sound like AI.
 6. I asked it to record the demo video with OBS, since narration was optional.
 7. I sent it my Assignment 1-5 instruction docs and asked it to check the project against them, since the assignment says to use the tables from those.
+8. "Go back through every assignment again, line by line, and make sure the data is exactly what the assignments had. Nothing made up unless the spec needs it. I need to be 10000% sure."
 
 ## What Worked Well
 
@@ -28,11 +29,11 @@ Some design choices came from the AI and I kept them:
 - JSON columns (job requirements and interview rounds) are written with `json.dumps` and read back through one helper.
 - Forms validate on the server, show flash messages, and keep what you typed after an error.
 - Job Match is a plain function in `matching.py` that doesn't touch the database, so it has unit tests in `tests/test_job_match.py`. It ranks by percentage, then by number of matched skills, and puts jobs with no requirements last.
-- Foreign keys use `ON DELETE CASCADE`, and the delete button on a company shows a `confirm()` warning that its jobs, applications and contacts go too.
-- `salary_min <= salary_max` is checked both in the database (a CHECK) and in the app.
+- Every delete button shows a `confirm()` warning first. The foreign keys are plain like in Assignment 2, so the app catches MySQL's "row is still referenced" error and shows a message instead of crashing.
+- `salary_min <= salary_max` is checked in the app before saving.
 - The demo video was recorded by the agent too. It drove OBS, the terminals and a clean browser window (so no autofill popped up), and I watched the result after.
 
-It also tested its own work with an end-to-end script that created, edited and deleted rows in all 4 tables, triggered the validation errors, checked the cascade delete, and checked Job Match. For example "python, SQL, FLASK" gave Software Developer 100% (3/3), and "sql, excel" gave Data Analyst 67% (2/3) with Tableau missing. It also cloned the repo fresh and followed the README to make sure the setup steps work.
+It also tested its own work with an end-to-end script that created, edited and deleted rows in all 4 tables, triggered the validation errors, checked that a company or job that is still in use can't be deleted, and checked Job Match. For example "python, SQL, FLASK" gave Software Developer 100% (3/3), and the next result was Data Analyst 67% (2/3) with Tableau missing. It also cloned the repo fresh and followed the README to make sure the setup steps work.
 
 When git had no name or email set, the agent stopped and asked me instead of guessing. I chose my GitHub noreply email and it set that for this repo only.
 
@@ -45,12 +46,14 @@ When git had no name or email set, the agent stopped and asked me instead of gue
 - Windows path bug. A helper script used a Git Bash style `/c/...` path that Windows Python couldn't read, so one route silently didn't get added. It got caught because the nav link threw a `url_for` BuildError. It was fixed with a normal Windows path.
 - Review pass. A second agent went through every page and the code. It didn't find logic or security bugs, but it fixed the Edit/Delete buttons breaking the table row lines and made the "n/a" on jobs with no requirements grey instead of red so it doesn't look like a 0% score.
 - Schema. The first version only followed the project spec. After comparing it with Assignments 1-5, the schema got the missing columns (`job_description`, `is_active`, `response_date`, `interview_date`, `notes`, `created_at`), the Assignment 3 indexes, and the assignments' sample data. Where the two documents disagreed on a name or type, I kept the spec's version. The job and application forms and the detail pages got the new fields, and failed writes in `database.py` now roll back like in Assignments 4 and 5.
+- Second audit. That first pass still had things the AI made up: job descriptions and posting URLs, `https://` added to the websites, response dates and interview names, three extra applications to cover every status, a note on Digital Innovations, `ON DELETE CASCADE` and a salary CHECK. I asked it to go back through every assignment line by line. It replayed every statement from Assignments 1-5 in order on a scratch database (skipping the rolled back ones) and rebuilt `schema.sql` from the result. It caught that the Assignment 4 company notes UPDATE actually fails in MySQL, so that note was never saved, and that ids like New Tech Corp's 7 come from the deleted and rolled back rows. The only invented values left are the job `requirements` lists and a little `interview_data`, because the spec needs them and the assignments have none. It also relaxed the web address check so `www.techsolutions.com` is accepted, and removed the cascade so the foreign keys match Assignment 2.
 - Docs. I had the README and this file rewritten in plainer wording, and the setup steps were tested on a fresh clone.
 
 ## Lessons Learned
 
 - Giving the AI the whole spec up front worked better than describing it piece by piece.
-- Give the AI all the context up front, including the earlier assignments. It only knows what you give it, and it built the first version without Assignments 2 to 5, so the schema had to be fixed afterwards.
+- Give the AI all the context up front, including the earlier assignments. It only knows what you give it, and it built the first version without Assignments 2 to 5, so the schema had to be fixed afterwards, and even the first fix added things I never had.
+- When I need the data to match something exact, say so and tell it not to invent anything. It filled gaps with realistic looking data until I asked for the audit.
 - You still have to test what it writes. Some things only showed up when the app actually ran, like the missing route and the wrong package version.
 - The AI can be confidently wrong about versions and file paths. Check with `pip freeze` and by running things instead of trusting what it says from memory.
 - If you don't tell it the scope, it adds extras. Saying "keep it simple" made a real difference.
