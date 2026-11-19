@@ -245,3 +245,48 @@ def update_application(application_id, data):
 def delete_application(application_id):
     _, count = execute("DELETE FROM applications WHERE application_id = %s", (application_id,))
     return count > 0
+
+
+# ----------------------------------------------------------------- contacts
+
+CONTACT_SELECT = """SELECT t.*, c.company_name
+    FROM contacts t JOIN companies c ON c.company_id = t.company_id"""
+
+
+def get_contacts():
+    return query_all(CONTACT_SELECT + " ORDER BY t.contact_name")
+
+
+def get_contacts_for_company(company_id):
+    return query_all(
+        CONTACT_SELECT + " WHERE t.company_id = %s ORDER BY t.contact_name", (company_id,)
+    )
+
+
+def get_contact(contact_id):
+    return query_one(CONTACT_SELECT + " WHERE t.contact_id = %s", (contact_id,))
+
+
+def create_contact(data):
+    new_id, _ = execute(
+        """INSERT INTO contacts (company_id, contact_name, title, email, phone, linkedin_url, notes)
+           VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+        (data["company_id"], data["contact_name"], data["title"], data["email"],
+         data["phone"], data["linkedin_url"], data["notes"]),
+    )
+    return new_id
+
+
+def update_contact(contact_id, data):
+    execute(
+        """UPDATE contacts SET company_id = %s, contact_name = %s, title = %s, email = %s,
+                  phone = %s, linkedin_url = %s, notes = %s
+           WHERE contact_id = %s""",
+        (data["company_id"], data["contact_name"], data["title"], data["email"],
+         data["phone"], data["linkedin_url"], data["notes"], contact_id),
+    )
+
+
+def delete_contact(contact_id):
+    _, count = execute("DELETE FROM contacts WHERE contact_id = %s", (contact_id,))
+    return count > 0

@@ -136,7 +136,8 @@ def companies():
 def company_detail(company_id):
     company = or_404(db.get_company(company_id))
     return render_template("company_detail.html", section="companies", company=company,
-                           jobs=db.get_jobs_for_company(company_id))
+                           jobs=db.get_jobs_for_company(company_id),
+                           contacts=db.get_contacts_for_company(company_id))
 
 
 @app.route("/companies/new", methods=["GET", "POST"])
@@ -409,6 +410,70 @@ def application_delete(application_id):
     db.delete_application(application_id)
     flash("Application was deleted.", "success")
     return redirect(url_for("applications"))
+
+
+# ---------------------------------------------------------------- contacts
+
+def parse_contact_form(form):
+    errors = []
+    data = {
+        "company_id": get_company_id(form, errors),
+        "contact_name": get_text(form, "contact_name", "Contact name", 100, errors, required=True),
+        "title": get_text(form, "title", "Title", 100, errors),
+        "email": get_email(form, "email", "Email", 100, errors),
+        "phone": get_text(form, "phone", "Phone", 20, errors),
+        "linkedin_url": get_url(form, "linkedin_url", "LinkedIn URL", 200, errors),
+        "notes": get_text(form, "notes", "Notes", 5000, errors),
+    }
+    if data["phone"] and not PHONE_RE.match(data["phone"]):
+        errors.append("Phone may only contain digits, spaces, + ( ) - and . (7 to 20 characters).")
+    return data, errors
+
+
+def contact_form_context(contact, mode, contact_id=None):
+    return dict(section="contacts", contact=contact, mode=mode, contact_id=contact_id,
+                companies=db.company_choices())
+
+
+@app.route("/contacts")
+def contacts():
+    return render_template("contacts.html", section="contacts", contacts=db.get_contacts())
+
+
+@app.route("/contacts/new", methods=["GET", "POST"])
+def contact_new():
+    if request.method == "POST":
+        data, errors = parse_contact_form(request.form)
+        if errors:
+            flash_errors(errors)
+            return render_template("contact_form.html", **contact_form_context(request.form, "new"))
+        db.create_contact(data)
+        flash(f"Contact '{data['contact_name']}' was added.", "success")
+        return redirect(url_for("contacts"))
+    preset = {"company_id": request.args.get("company_id", type=int)}
+    return render_template("contact_form.html", **contact_form_context(preset, "new"))
+
+
+@app.route("/contacts/<int:contact_id>/edit", methods=["GET", "POST"])
+def contact_edit(contact_id):
+    contact = or_404(db.get_contact(contact_id))
+    if request.method == "POST":
+        data, errors = parse_contact_form(request.form)
+        if errors:
+            flash_errors(errors)
+            return render_template("contact_form.html", **contact_form_context(request.form, "edit", contact_id))
+        db.update_contact(contact_id, data)
+        flash(f"Contact '{data['contact_name']}' was updated.", "success")
+        return redirect(url_for("contacts"))
+    return render_template("contact_form.html", **contact_form_context(contact, "edit", contact_id))
+
+
+@app.route("/contacts/<int:contact_id>/delete", methods=["POST"])
+def contact_delete(contact_id):
+    contact = or_404(db.get_contact(contact_id))
+    db.delete_contact(contact_id)
+    flash(f"Contact '{contact['contact_name']}' was deleted.", "success")
+    return redirect(url_for("contacts"))
 
 
 if __name__ == "__main__":

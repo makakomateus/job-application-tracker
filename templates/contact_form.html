@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Add contact' if mode == 'new' else 'Edit contact' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+    <h1>{{ 'Add contact' if mode == 'new' else 'Edit contact' }}</h1>
+</div>
+
+<div class="card">
+{% if not companies %}
+    <div class="empty">
+        <p>You need a company before you can add a contact.</p>
+        <a class="btn" href="{{ url_for('company_new') }}">Add a company</a>
+    </div>
+{% else %}
+<form method="post" class="stacked" novalidate>
+    <div class="form-row">
+        <div class="field">
+            <label for="company_id">Company <span class="req">*</span></label>
+            <select id="company_id" name="company_id" required>
+                <option value="">Select a company</option>
+                {% for c in companies %}
+                <option value="{{ c.company_id }}" {{ 'selected' if (contact.get('company_id') | string) == (c.company_id | string) }}>{{ c.company_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="contact_name">Name <span class="req">*</span></label>
+            <input type="text" id="contact_name" name="contact_name" maxlength="100" required value="{{ contact.get('contact_name') or '' }}">
+        </div>
+    </div>
+    <div class="field">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" maxlength="100" placeholder="Technical Recruiter" value="{{ contact.get('title') or '' }}">
+    </div>
+    <div class="form-row">
+        <div class="field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" maxlength="100" value="{{ contact.get('email') or '' }}">
+        </div>
+        <div class="field">
+            <label for="phone">Phone</label>
+            <input type="text" id="phone" name="phone" maxlength="20" placeholder="305-555-0100" value="{{ contact.get('phone') or '' }}">
+        </div>
+    </div>
+    <div class="field">
+        <label for="linkedin_url">LinkedIn URL</label>
+        <input type="url" id="linkedin_url" name="linkedin_url" maxlength="200" placeholder="https://www.linkedin.com/in/..." value="{{ contact.get('linkedin_url') or '' }}">
+    </div>
+    <div class="field">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="3">{{ contact.get('notes') or '' }}</textarea>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn">{{ 'Add contact' if mode == 'new' else 'Save changes' }}</button>
+        <a class="btn btn-light" href="{{ url_for('contacts') }}">Cancel</a>
+    </div>
+</form>
+{% endif %}
+</div>
+{% endblock %}
