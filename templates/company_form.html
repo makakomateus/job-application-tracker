@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Add company' if mode == 'new' else 'Edit company' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+    <h1>{{ 'Add company' if mode == 'new' else 'Edit company' }}</h1>
+</div>
+
+<div class="card">
+<form method="post" class="stacked" novalidate>
+    <div class="field">
+        <label for="company_name">Company name <span class="req">*</span></label>
+        <input type="text" id="company_name" name="company_name" maxlength="100" required value="{{ company.get('company_name') or '' }}">
+    </div>
+    <div class="form-row">
+        <div class="field">
+            <label for="industry">Industry</label>
+            <input type="text" id="industry" name="industry" maxlength="50" value="{{ company.get('industry') or '' }}">
+        </div>
+        <div class="field">
+            <label for="website">Website</label>
+            <input type="url" id="website" name="website" maxlength="200" placeholder="https://example.com" value="{{ company.get('website') or '' }}">
+        </div>
+    </div>
+    <div class="form-row">
+        <div class="field">
+            <label for="city">City</label>
+            <input type="text" id="city" name="city" maxlength="50" value="{{ company.get('city') or '' }}">
+        </div>
+        <div class="field">
+            <label for="state">State</label>
+            <input type="text" id="state" name="state" maxlength="50" value="{{ company.get('state') or '' }}">
+        </div>
+    </div>
+    <div class="field">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="4">{{ company.get('notes') or '' }}</textarea>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn">{{ 'Add company' if mode == 'new' else 'Save changes' }}</button>
+        <a class="btn btn-light" href="{{ url_for('companies') }}">Cancel</a>
+    </div>
+</form>
+</div>
+{% endblock %}

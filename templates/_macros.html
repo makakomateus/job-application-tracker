@@ -1,0 +1,18 @@
+{# Shared template helpers #}
+
+{% macro delete_button(action, message, label='Delete') %}
+<form method="post" action="{{ action }}"
+      onsubmit="return confirm({{ message|tojson }});">
+    <button type="submit" class="btn btn-danger btn-sm">{{ label }}</button>
+</form>
+{% endmacro %}
+
+{% macro status_badge(status) %}
+{% if status %}<span class="badge badge-{{ status|lower }}">{{ status }}</span>{% else %}<span class="muted">-</span>{% endif %}
+{% endmacro %}
+
+{% macro skill_tags(skills) %}
+{% if skills %}{% for s in skills %}<span class="tag">{{ s }}</span>{% endfor %}{% else %}<span class="muted small">None listed</span>{% endif %}
+{% endmacro %}
+
+{% macro money(value) %}{% if value is not none %}${{ '{:,}'.format(value) }}{% else %}-{% endif %}{% endmacro %}
