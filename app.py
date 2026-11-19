@@ -6,6 +6,7 @@ from datetime import date, datetime
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
 
 import database as db
+from matching import parse_skills, rank_jobs
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
@@ -479,6 +480,24 @@ def contact_delete(contact_id):
     db.delete_contact(contact_id)
     flash(f"Contact '{contact['contact_name']}' was deleted.", "success")
     return redirect(url_for("contacts"))
+
+
+# --------------------------------------------------------------- job match
+
+@app.route("/job-match")
+def job_match():
+    skills_text = (request.args.get("skills") or "").strip()
+    user_skills = parse_skills(skills_text)
+    results = None
+    if "skills" in request.args:
+        if not user_skills:
+            flash("Enter at least one skill, separated by commas.", "error")
+        elif len(skills_text) > 500:
+            flash("Skills list is too long (500 characters max).", "error")
+        else:
+            results = rank_jobs(user_skills, db.get_jobs())
+    return render_template("job_match.html", section="job_match", skills_text=skills_text,
+                           user_skills=user_skills, results=results)
 
 
 if __name__ == "__main__":

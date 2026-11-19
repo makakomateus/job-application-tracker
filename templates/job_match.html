@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Job Match{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Job Match</h1>
+        <p class="subtitle">Enter your skills and see which saved jobs fit best</p>
+    </div>
+</div>
+
+<div class="card">
+    <form method="get" action="{{ url_for('job_match') }}" class="stacked">
+        <div class="field">
+            <label for="skills">Your skills</label>
+            <input type="text" id="skills" name="skills" placeholder="Python, SQL, Flask" value="{{ skills_text }}" maxlength="500">
+            <div class="hint">Separate skills with commas. Capital letters do not matter.</div>
+        </div>
+        <button type="submit" class="btn">Find matches</button>
+    </form>
+</div>
+
+{% if results is not none %}
+<div class="card">
+    <h2>Results for: {% for s in user_skills %}<span class="tag">{{ s }}</span>{% endfor %}</h2>
+    {% if results %}
+        {% for r in results %}
+        <div class="match-row">
+            <div class="match-pct {{ 'pct-high' if r.percent is not none and r.percent >= 70 else ('pct-mid' if r.percent is not none and r.percent >= 40 else 'pct-low') }}">
+                {% if r.percent is not none %}{{ r.percent }}%{% else %}n/a{% endif %}
+            </div>
+            <div style="flex:1">
+                <strong>{{ loop.index }}. <a href="{{ url_for('job_detail', job_id=r.job.job_id) }}">{{ r.job.job_title }}</a> at {{ r.job.company_name }}</strong>
+                {% if r.percent is not none %}
+                <span class="muted small"> - {{ r.percent }}% ({{ r.matched_count }}/{{ r.total }} skills)</span>
+                <div class="bar"><span style="width: {{ r.percent }}%"></span></div>
+                <div class="small">
+                    {% if r.matched %}Matched: {% for s in r.matched %}<span class="tag tag-match">{{ s }}</span>{% endfor %}{% endif %}
+                </div>
+                {% if r.missing %}
+                <div class="small">Missing: {% for s in r.missing %}<span class="tag tag-miss">{{ s }}</span>{% endfor %}</div>
+                {% endif %}
+                {% else %}
+                <div class="muted small">This job has no requirements listed, so it cannot be scored.</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty">
+            <p>There are no jobs to match against yet.</p>
+            <a class="btn" href="{{ url_for('job_new') }}">Add a job</a>
+        </div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
