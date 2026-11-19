@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import skill_tags, money %}
+{% block title %}{{ job.job_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>{{ job.job_title }}</h1>
+        <p class="subtitle">{{ job.company_name }}</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-light" href="{{ url_for('job_edit', job_id=job.job_id) }}">Edit</a>
+        <a class="btn btn-light" href="{{ url_for('jobs') }}">Back to jobs</a>
+    </div>
+</div>
+
+<div class="card">
+    <dl class="details">
+        <dt>Company</dt><dd><a href="{{ url_for('company_detail', company_id=job.company_id) }}">{{ job.company_name }}</a></dd>
+        <dt>Job type</dt><dd>{{ job.job_type or '-' }}</dd>
+        <dt>Salary range</dt><dd>{{ money(job.salary_min) }} - {{ money(job.salary_max) }}</dd>
+        <dt>Date posted</dt><dd>{{ job.date_posted or '-' }}</dd>
+        <dt>Posting</dt><dd>{% if job.job_url %}<a href="{{ job.job_url }}" target="_blank" rel="noopener">{{ job.job_url }}</a>{% else %}-{% endif %}</dd>
+        <dt>Requirements</dt><dd>{{ skill_tags(job.requirements) }}</dd>
+    </dl>
+</div>
+{% endblock %}

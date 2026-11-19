@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import skill_tags, money %}
+{% block title %}{{ company.company_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>{{ company.company_name }}</h1>
+        <p class="subtitle">{{ company.industry or 'Industry not set' }}</p>
+    </div>
+    <div class="actions">
+        <a class="btn btn-light" href="{{ url_for('company_edit', company_id=company.company_id) }}">Edit</a>
+        <a class="btn btn-light" href="{{ url_for('companies') }}">Back to companies</a>
+    </div>
+</div>
+
+<div class="card">
+    <dl class="details">
+        <dt>Location</dt><dd>{{ [company.city, company.state]|select|join(', ') or '-' }}</dd>
+        <dt>Website</dt><dd>{% if company.website %}<a href="{{ company.website }}" target="_blank" rel="noopener">{{ company.website }}</a>{% else %}-{% endif %}</dd>
+        <dt>Notes</dt><dd>{{ company.notes or '-' }}</dd>
+    </dl>
+</div>
+
+<div class="card">
+    <div class="page-head" style="margin-bottom:10px">
+        <h2 style="margin:0">Jobs ({{ jobs|length }})</h2>
+        <a class="btn btn-sm" href="{{ url_for('job_new', company_id=company.company_id) }}">+ Add job</a>
+    </div>
+    {% if jobs %}
+    <div class="table-wrap"><table>
+        <thead><tr><th>Title</th><th>Type</th><th>Salary</th><th>Requirements</th></tr></thead>
+        <tbody>
+        {% for j in jobs %}
+        <tr>
+            <td><a href="{{ url_for('job_detail', job_id=j.job_id) }}">{{ j.job_title }}</a></td>
+            <td>{{ j.job_type or '-' }}</td>
+            <td class="small">{{ money(j.salary_min) }} - {{ money(j.salary_max) }}</td>
+            <td>{{ skill_tags(j.requirements) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}
+    <div class="empty"><p>No jobs saved for this company.</p></div>
+    {% endif %}
+</div>
+{% endblock %}

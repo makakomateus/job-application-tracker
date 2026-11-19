@@ -116,3 +116,76 @@ def delete_company(company_id):
     """Delete a company; jobs, applications and contacts cascade."""
     _, count = execute("DELETE FROM companies WHERE company_id = %s", (company_id,))
     return count > 0
+
+
+# --------------------------------------------------------------------- jobs
+
+def _decode_job(row):
+    row["requirements"] = decode_json(row.get("requirements"), [])
+    return row
+
+
+def get_jobs():
+    rows = query_all(
+        """SELECT j.*, c.company_name,
+                  (SELECT COUNT(*) FROM applications a WHERE a.job_id = j.job_id) AS application_count
+           FROM jobs j JOIN companies c ON c.company_id = j.company_id
+           ORDER BY j.date_posted DESC, j.job_id DESC"""
+    )
+    return [_decode_job(r) for r in rows]
+
+
+def get_jobs_for_company(company_id):
+    rows = query_all(
+        "SELECT * FROM jobs WHERE company_id = %s ORDER BY date_posted DESC, job_id DESC",
+        (company_id,),
+    )
+    return [_decode_job(r) for r in rows]
+
+
+def get_job(job_id):
+    row = query_one(
+        """SELECT j.*, c.company_name
+           FROM jobs j JOIN companies c ON c.company_id = j.company_id
+           WHERE j.job_id = %s""",
+        (job_id,),
+    )
+    return _decode_job(row) if row else None
+
+
+def job_choices():
+    """Job list for dropdowns, labelled with the company name."""
+    return query_all(
+        """SELECT j.job_id, j.job_title, c.company_name
+           FROM jobs j JOIN companies c ON c.company_id = j.company_id
+           ORDER BY c.company_name, j.job_title"""
+    )
+
+
+def create_job(data):
+    new_id, _ = execute(
+        """INSERT INTO jobs (company_id, job_title, job_type, salary_min, salary_max,
+                             job_url, date_posted, requirements)
+           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+        (data["company_id"], data["job_title"], data["job_type"], data["salary_min"],
+         data["salary_max"], data["job_url"], data["date_posted"],
+         encode_json(data["requirements"])),
+    )
+    return new_id
+
+
+def update_job(job_id, data):
+    execute(
+        """UPDATE jobs SET company_id = %s, job_title = %s, job_type = %s, salary_min = %s,
+                  salary_max = %s, job_url = %s, date_posted = %s, requirements = %s
+           WHERE job_id = %s""",
+        (data["company_id"], data["job_title"], data["job_type"], data["salary_min"],
+         data["salary_max"], data["job_url"], data["date_posted"],
+         encode_json(data["requirements"]), job_id),
+    )
+
+
+def delete_job(job_id):
+    """Delete a job; its applications cascade."""
+    _, count = execute("DELETE FROM jobs WHERE job_id = %s", (job_id,))
+    return count > 0

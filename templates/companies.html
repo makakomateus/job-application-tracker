@@ -20,7 +20,7 @@
         <tbody>
         {% for c in companies %}
             <tr>
-                <td><strong>{{ c.company_name }}</strong>
+                <td><a href="{{ url_for('company_detail', company_id=c.company_id) }}"><strong>{{ c.company_name }}</strong></a>
                     {% if c.website %}<br><a class="small" href="{{ c.website }}" target="_blank" rel="noopener">{{ c.website }}</a>{% endif %}</td>
                 <td>{{ c.industry or '-' }}</td>
                 <td>{{ [c.city, c.state]|select|join(', ') or '-' }}</td>
