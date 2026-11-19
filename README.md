@@ -29,7 +29,7 @@ I made this for my database course. It uses MySQL for storage, Python with Flask
 
 ## Setup
 
-### Windows (PowerShell or Command Prompt)
+### Windows (Command Prompt)
 
 ```
 git clone https://github.com/makakomateus/job-application-tracker.git
@@ -40,6 +40,8 @@ pip install -r requirements.txt
 mysql -u root -p < schema.sql
 copy .env.example .env
 ```
+
+In PowerShell the `<` redirect does not work, so load the schema with `Get-Content schema.sql | mysql -u root -p` and activate the virtual environment with `venv\Scripts\Activate.ps1`.
 
 If `mysql` is not recognized, use the full path to `mysql.exe` (for example `"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe"`) or run the file from MySQL Workbench.
 
@@ -80,6 +82,8 @@ Give it about 30 seconds to start, then load the schema:
 ```
 docker exec -i jobtracker-mysql mysql -uroot -pyour_password < schema.sql
 ```
+
+(In PowerShell: `Get-Content schema.sql | docker exec -i jobtracker-mysql mysql -uroot -pyour_password`)
 
 After that, follow the same steps as above, skipping the `mysql -u root -p < schema.sql` line.
 
