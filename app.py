@@ -12,7 +12,9 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-URL_RE = re.compile(r"^https?://[^\s/$.?#][^\s]*$", re.IGNORECASE)
+# A web address, with or without http(s)://, so values like www.techsolutions.com
+# (as typed in Assignment 2) are accepted. Anything else, such as javascript:, is not.
+URL_RE = re.compile(r"^(https?://)?[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?([/?#]\S*)?$", re.IGNORECASE)
 PHONE_RE = re.compile(r"^[0-9+()\-.\s]{7,20}$")
 
 
@@ -33,7 +35,7 @@ def get_text(form, name, label, max_len, errors, required=False):
 def get_url(form, name, label, max_len, errors):
     value = get_text(form, name, label, max_len, errors)
     if value and not URL_RE.match(value):
-        errors.append(f"{label} must start with http:// or https://.")
+        errors.append(f"{label} must be a web address like www.example.com or https://example.com.")
     return value
 
 
@@ -106,6 +108,14 @@ def get_choice(form, name, label, allowed, errors, required=False):
 def flash_errors(errors):
     for message in errors:
         flash(message, "error")
+
+
+@app.template_filter("weblink")
+def weblink(url):
+    """Make a stored web address usable as a link (adds https:// when it is missing)."""
+    if not url:
+        return ""
+    return url if url.lower().startswith(("http://", "https://")) else "https://" + url
 
 
 def or_404(record):
@@ -192,8 +202,13 @@ def company_edit(company_id):
 @app.route("/companies/<int:company_id>/delete", methods=["POST"])
 def company_delete(company_id):
     company = or_404(db.get_company(company_id))
-    db.delete_company(company_id)
-    flash(f"Company '{company['company_name']}' and its jobs, applications and contacts were deleted.", "success")
+    try:
+        db.delete_company(company_id)
+    except db.InUseError:
+        flash(f"Company '{company['company_name']}' can't be deleted while it still has jobs or "
+              "contacts. Delete those first.", "error")
+        return redirect(url_for("companies"))
+    flash(f"Company '{company['company_name']}' was deleted.", "success")
     return redirect(url_for("companies"))
 
 
@@ -298,8 +313,13 @@ def job_edit(job_id):
 @app.route("/jobs/<int:job_id>/delete", methods=["POST"])
 def job_delete(job_id):
     job = or_404(db.get_job(job_id))
-    db.delete_job(job_id)
-    flash(f"Job '{job['job_title']}' and its applications were deleted.", "success")
+    try:
+        db.delete_job(job_id)
+    except db.InUseError:
+        flash(f"Job '{job['job_title']}' can't be deleted while it still has applications. "
+              "Delete those first.", "error")
+        return redirect(url_for("jobs"))
+    flash(f"Job '{job['job_title']}' was deleted.", "success")
     return redirect(url_for("jobs"))
 
 

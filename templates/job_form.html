@@ -55,7 +55,7 @@
     </div>
     <div class="field">
         <label for="job_url">Job posting URL</label>
-        <input type="url" id="job_url" name="job_url" maxlength="300" placeholder="https://" value="{{ job.get('job_url') or '' }}">
+        <input type="text" id="job_url" name="job_url" maxlength="300" placeholder="www.example.com/jobs/123" value="{{ job.get('job_url') or '' }}">
     </div>
     <div class="field">
         <label for="job_description">Job description</label>

@@ -24,7 +24,7 @@
                 <td><a href="{{ url_for('company_detail', company_id=t.company_id) }}">{{ t.company_name }}</a></td>
                 <td class="small">{% if t.email %}<a href="mailto:{{ t.email }}">{{ t.email }}</a>{% else %}-{% endif %}</td>
                 <td class="small">{{ t.phone or '-' }}</td>
-                <td class="small">{% if t.linkedin_url %}<a href="{{ t.linkedin_url }}" target="_blank" rel="noopener">Profile</a>{% else %}-{% endif %}</td>
+                <td class="small">{% if t.linkedin_url %}<a href="{{ t.linkedin_url|weblink }}" target="_blank" rel="noopener">Profile</a>{% else %}-{% endif %}</td>
                 <td class="actions">
                     <a class="btn btn-light btn-sm" href="{{ url_for('contact_edit', contact_id=t.contact_id) }}">Edit</a>
                     {{ delete_button(url_for('contact_delete', contact_id=t.contact_id),

@@ -21,7 +21,7 @@
         {% for c in companies %}
             <tr>
                 <td><a href="{{ url_for('company_detail', company_id=c.company_id) }}"><strong>{{ c.company_name }}</strong></a>
-                    {% if c.website %}<br><a class="small" href="{{ c.website }}" target="_blank" rel="noopener">{{ c.website }}</a>{% endif %}</td>
+                    {% if c.website %}<br><a class="small" href="{{ c.website|weblink }}" target="_blank" rel="noopener">{{ c.website }}</a>{% endif %}</td>
                 <td>{{ c.industry or '-' }}</td>
                 <td>{{ [c.city, c.state]|select|join(', ') or '-' }}</td>
                 <td class="num">{{ c.job_count }}</td>
@@ -29,7 +29,7 @@
                 <td class="actions">
                     <a class="btn btn-light btn-sm" href="{{ url_for('company_edit', company_id=c.company_id) }}">Edit</a>
                     {{ delete_button(url_for('company_delete', company_id=c.company_id),
-                        'Delete ' ~ c.company_name ~ '? This also deletes its ' ~ c.job_count ~ ' job(s), their applications and ' ~ c.contact_count ~ ' contact(s). This cannot be undone.') }}
+                        'Delete ' ~ c.company_name ~ '? This cannot be undone.') }}
                 </td>
             </tr>
         {% endfor %}

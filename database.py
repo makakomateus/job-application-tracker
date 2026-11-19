@@ -71,6 +71,25 @@ def execute(sql, params=()):
         conn.close()
 
 
+class InUseError(Exception):
+    """A row can't be deleted because rows in another table still point to it."""
+
+
+def delete_row(sql, params):
+    """Run a DELETE and return True if a row was removed.
+
+    The foreign keys have no ON DELETE action, so MySQL refuses (error 1451)
+    to delete a parent row that still has children. That is raised as InUseError.
+    """
+    try:
+        _, count = execute(sql, params)
+    except mysql.connector.errors.IntegrityError as error:
+        if error.errno == 1451:
+            raise InUseError() from error
+        raise
+    return count > 0
+
+
 def decode_json(value, default=None):
     """Decode a JSON column value that may arrive as str, bytes, or None."""
     if value is None:
@@ -131,9 +150,8 @@ def update_company(company_id, data):
 
 
 def delete_company(company_id):
-    """Delete a company; jobs, applications and contacts cascade."""
-    _, count = execute("DELETE FROM companies WHERE company_id = %s", (company_id,))
-    return count > 0
+    """Delete a company. Raises InUseError while it still has jobs or contacts."""
+    return delete_row("DELETE FROM companies WHERE company_id = %s", (company_id,))
 
 
 # --------------------------------------------------------------------- jobs
@@ -205,9 +223,8 @@ def update_job(job_id, data):
 
 
 def delete_job(job_id):
-    """Delete a job; its applications cascade."""
-    _, count = execute("DELETE FROM jobs WHERE job_id = %s", (job_id,))
-    return count > 0
+    """Delete a job. Raises InUseError while it still has applications."""
+    return delete_row("DELETE FROM jobs WHERE job_id = %s", (job_id,))
 
 
 # ------------------------------------------------------------- applications

@@ -16,7 +16,7 @@
 <div class="card">
     <dl class="details">
         <dt>Location</dt><dd>{{ [company.city, company.state]|select|join(', ') or '-' }}</dd>
-        <dt>Website</dt><dd>{% if company.website %}<a href="{{ company.website }}" target="_blank" rel="noopener">{{ company.website }}</a>{% else %}-{% endif %}</dd>
+        <dt>Website</dt><dd>{% if company.website %}<a href="{{ company.website|weblink }}" target="_blank" rel="noopener">{{ company.website }}</a>{% else %}-{% endif %}</dd>
         <dt>Notes</dt><dd>{{ company.notes or '-' }}</dd>
     </dl>
 </div>

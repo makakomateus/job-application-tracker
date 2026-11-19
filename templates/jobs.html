@@ -29,7 +29,7 @@
                 <td class="actions">
                     <a class="btn btn-light btn-sm" href="{{ url_for('job_edit', job_id=j.job_id) }}">Edit</a>
                     {{ delete_button(url_for('job_delete', job_id=j.job_id),
-                        'Delete ' ~ j.job_title ~ '? This also deletes its ' ~ j.application_count ~ ' application(s). This cannot be undone.') }}
+                        'Delete ' ~ j.job_title ~ '? This cannot be undone.') }}
                 </td>
             </tr>
         {% endfor %}
