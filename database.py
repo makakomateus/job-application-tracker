@@ -13,25 +13,33 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def get_config():
+    """Connection settings as a dict (same idea as the config dict in Assignment 5)."""
+    return {
+        "host": os.getenv("DB_HOST", "127.0.0.1"),
+        "port": int(os.getenv("DB_PORT", "3306")),
+        "user": os.getenv("DB_USER", "root"),
+        "password": os.getenv("DB_PASSWORD", ""),
+        "database": os.getenv("DB_NAME", "job_tracker"),
+    }
+
+
 def get_connection():
     """Open a new MySQL connection using settings from the environment."""
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "127.0.0.1"),
-        port=int(os.getenv("DB_PORT", "3306")),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", ""),
-        database=os.getenv("DB_NAME", "job_tracker"),
-    )
+    return mysql.connector.connect(**get_config())
 
 
 def query_all(sql, params=()):
     """Run a SELECT and return all rows as a list of dicts."""
     conn = get_connection()
+    cur = None
     try:
         cur = conn.cursor(dictionary=True)
         cur.execute(sql, params)
         return cur.fetchall()
     finally:
+        if cur is not None:
+            cur.close()
         conn.close()
 
 
@@ -42,14 +50,24 @@ def query_one(sql, params=()):
 
 
 def execute(sql, params=()):
-    """Run an INSERT/UPDATE/DELETE, commit, and return (lastrowid, rowcount)."""
+    """Run an INSERT/UPDATE/DELETE, commit, and return (lastrowid, rowcount).
+
+    If the statement fails the transaction is rolled back and the error is
+    raised again, the same pattern as Assignments 4 and 5.
+    """
     conn = get_connection()
+    cur = None
     try:
         cur = conn.cursor()
         cur.execute(sql, params)
         conn.commit()
         return cur.lastrowid, cur.rowcount
+    except mysql.connector.Error:
+        conn.rollback()
+        raise
     finally:
+        if cur is not None:
+            cur.close()
         conn.close()
 
 
