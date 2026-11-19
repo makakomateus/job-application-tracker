@@ -1,19 +1,19 @@
 # Job Application Tracker
 
-A web app for keeping track of a job search. You can save companies, the jobs they post, the applications you send, and the people you talk to. There is also a Job Match page that compares your skills to the requirements of each saved job.
+A web app for keeping track of a job search. You can save companies, the jobs they post, the applications you send, and the people you talk to. There is also a Job Match page that compares your skills to the saved jobs' requirements.
 
-I built this for my database course. It uses MySQL for storage, Python with Flask for the backend, and HTML and CSS for the pages.
+I made this for my database course. It uses MySQL for storage, Python with Flask for the backend, and HTML and CSS for the pages. I built it with AI help, and AI_USAGE.md explains how.
 
 ## Features
 
 - Dashboard with totals for each table, applications by status, upcoming interviews, recent applications and the average salary range
 - Companies, Jobs, Applications and Contacts pages, each with list, add, edit and delete
 - Delete buttons ask for confirmation. Deleting a company also deletes its jobs, applications and contacts, and the warning says so
-- Server-side validation with error messages (required fields, max lengths, valid dates, valid email and URL, salary min not above salary max, no negative salaries, dropdown values and foreign keys must exist)
+- Server-side validation with error messages: required fields, max lengths, valid dates, valid email and URL, salary min not above salary max, no negative salaries, and dropdown values and foreign keys must exist
 - Job requirements are stored as a JSON list in the `jobs` table
 - Interview rounds (date, type, interviewer, notes) are stored as JSON in the `applications` table and are entered with a small add/remove form
 - Company page that shows that company's jobs and contacts
-- Job Match: type your skills and see every job ranked by match percentage, with the skills you matched and the ones you are missing
+- Job Match: type your skills and every job is ranked by match percentage, showing the skills you matched and the ones you are missing
 
 ## Tech stack
 
@@ -25,7 +25,7 @@ I built this for my database course. It uses MySQL for storage, Python with Flas
 ## Prerequisites
 
 - Python 3.10 or newer (built and tested with 3.12)
-- MySQL 8 installed and running, with a user that can create databases (for example `root`)
+- MySQL 8 installed and running, with a user that can create databases (for example `root`). If you don't have MySQL, see the Docker option below.
 - Git
 
 ## Setup
@@ -68,11 +68,27 @@ Open `.env` and set `DB_PASSWORD` to your MySQL password. Then run:
 python app.py
 ```
 
+### Using Docker for MySQL (optional)
+
+If you don't have MySQL installed, you can run it in a container instead. I used this while developing. Pick any password and use the same one in `.env`:
+
+```
+docker run --name jobtracker-mysql -e MYSQL_ROOT_PASSWORD=your_password -p 3306:3306 -d mysql:8.4
+```
+
+Give it about 30 seconds to start, then load the schema:
+
+```
+docker exec -i jobtracker-mysql mysql -uroot -pyour_password < schema.sql
+```
+
+After that, follow the same steps as above, skipping the `mysql -u root -p < schema.sql` line.
+
 ### Open the app
 
 Go to http://127.0.0.1:5000 in your browser.
 
-`schema.sql` drops and recreates the `job_tracker` database, so running it again resets the sample data. It comes with 6 companies, 10 jobs, 10 applications and 8 contacts.
+`schema.sql` drops and recreates the `job_tracker` database, so running it again resets the sample data. The sample data is 6 companies, 10 jobs, 10 applications and 8 contacts.
 
 ### Settings (.env)
 
@@ -119,21 +135,17 @@ job_tracker/
   schema.sql        Creates the database, tables and sample data
   requirements.txt  Python packages
   .env.example      Example settings file
-  AI_USAGE.md       Notes on how AI was used
+  AI_USAGE.md       How AI was used
   templates/        Jinja HTML templates (base, dashboard, lists, forms, details, job match)
   static/style.css  Styles
   tests/            Unit tests for the matching function
   demo/             Demo video (demo_video.mp4)
 ```
 
-## Screenshots
-
-Screenshots are not added yet.
-
 ## Demo video
 
-The demo video is at `demo/demo_video.mp4`.
+The demo video is in the repo at `demo/demo_video.mp4`.
 
 ## AI usage
 
-See [AI_USAGE.md](AI_USAGE.md).
+I used Claude Code for most of the code. What I used it for, my prompts, and what I had to fix are in [AI_USAGE.md](AI_USAGE.md).
