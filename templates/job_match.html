@@ -25,7 +25,7 @@
     {% if results %}
         {% for r in results %}
         <div class="match-row">
-            <div class="match-pct {{ 'pct-high' if r.percent is not none and r.percent >= 70 else ('pct-mid' if r.percent is not none and r.percent >= 40 else 'pct-low') }}">
+            <div class="match-pct {{ 'pct-na' if r.percent is none else ('pct-high' if r.percent >= 70 else ('pct-mid' if r.percent >= 40 else 'pct-low')) }}">
                 {% if r.percent is not none %}{{ r.percent }}%{% else %}n/a{% endif %}
             </div>
             <div style="flex:1">
