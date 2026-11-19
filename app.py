@@ -108,7 +108,12 @@ def not_found(_error):
 
 @app.route("/")
 def dashboard():
-    return redirect(url_for("companies"))
+    return render_template(
+        "dashboard.html", section="dashboard",
+        counts=db.get_counts(), status_counts=db.get_status_counts(), statuses=STATUSES,
+        recent=db.get_recent_applications(), salary=db.get_salary_stats(),
+        upcoming=db.get_upcoming_interviews(date.today().isoformat()),
+    )
 
 
 # --------------------------------------------------------------- companies

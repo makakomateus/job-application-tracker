@@ -290,3 +290,61 @@ def update_contact(contact_id, data):
 def delete_contact(contact_id):
     _, count = execute("DELETE FROM contacts WHERE contact_id = %s", (contact_id,))
     return count > 0
+
+
+# ---------------------------------------------------------------- dashboard
+
+def get_counts():
+    """Row counts for each table."""
+    return query_one(
+        """SELECT (SELECT COUNT(*) FROM companies)    AS companies,
+                  (SELECT COUNT(*) FROM jobs)         AS jobs,
+                  (SELECT COUNT(*) FROM applications) AS applications,
+                  (SELECT COUNT(*) FROM contacts)     AS contacts"""
+    )
+
+
+def get_status_counts():
+    """Number of applications per status."""
+    rows = query_all("SELECT status, COUNT(*) AS total FROM applications GROUP BY status")
+    return {r["status"]: r["total"] for r in rows}
+
+
+def get_salary_stats():
+    """Average salary range across jobs that list one."""
+    return query_one(
+        """SELECT ROUND(AVG(salary_min)) AS avg_min, ROUND(AVG(salary_max)) AS avg_max
+           FROM jobs WHERE salary_min IS NOT NULL AND salary_max IS NOT NULL"""
+    )
+
+
+def get_recent_applications(limit=5):
+    rows = query_all(
+        APPLICATION_SELECT + " ORDER BY a.application_date DESC, a.application_id DESC LIMIT %s",
+        (limit,),
+    )
+    return [_decode_application(r) for r in rows]
+
+
+def get_upcoming_interviews(today, limit=5):
+    """Interview rounds dated today or later, soonest first.
+
+    Rounds live inside the interview_data JSON, so they are collected here
+    in Python rather than in SQL.
+    """
+    rows = query_all(APPLICATION_SELECT + " WHERE a.interview_data IS NOT NULL")
+    upcoming = []
+    for row in rows:
+        data = decode_json(row["interview_data"], {}) or {}
+        for rnd in data.get("rounds", []):
+            if rnd.get("date") and rnd["date"] >= today:
+                upcoming.append({
+                    "date": rnd["date"],
+                    "type": rnd.get("type") or "Interview",
+                    "interviewer": rnd.get("interviewer"),
+                    "application_id": row["application_id"],
+                    "job_title": row["job_title"],
+                    "company_name": row["company_name"],
+                })
+    upcoming.sort(key=lambda item: item["date"])
+    return upcoming[:limit]

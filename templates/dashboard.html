@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, money %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <h1>Dashboard</h1>
+        <p class="subtitle">Overview of your job search</p>
+    </div>
+    <a class="btn" href="{{ url_for('application_new') }}">+ Add application</a>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:20px">
+    <div class="card stat" style="margin:0">
+        <div class="value">{{ counts.companies }}</div>
+        <div class="label">Companies</div>
+        <a href="{{ url_for('companies') }}">View all</a>
+    </div>
+    <div class="card stat" style="margin:0">
+        <div class="value">{{ counts.jobs }}</div>
+        <div class="label">Jobs saved</div>
+        <a href="{{ url_for('jobs') }}">View all</a>
+    </div>
+    <div class="card stat" style="margin:0">
+        <div class="value">{{ counts.applications }}</div>
+        <div class="label">Applications</div>
+        <a href="{{ url_for('applications') }}">View all</a>
+    </div>
+    <div class="card stat" style="margin:0">
+        <div class="value">{{ counts.contacts }}</div>
+        <div class="label">Contacts</div>
+        <a href="{{ url_for('contacts') }}">View all</a>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <h2>Applications by status</h2>
+        {% if counts.applications %}
+        <table>
+            <tbody>
+            {% for s in statuses %}
+            <tr>
+                <td>{{ status_badge(s) }}</td>
+                <td class="num"><a href="{{ url_for('applications', status=s) }}">{{ status_counts.get(s, 0) }}</a></td>
+                <td style="width:50%">
+                    <div class="bar" style="margin:4px 0"><span style="width: {{ (status_counts.get(s, 0) * 100 / counts.applications)|round|int }}%"></span></div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty"><p>No applications yet.</p></div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Upcoming interviews</h2>
+        {% if upcoming %}
+        <ul class="timeline">
+            {% for u in upcoming %}
+            <li>
+                <strong>{{ u.date }}</strong> - {{ u.type }}<br>
+                <a class="small" href="{{ url_for('application_detail', application_id=u.application_id) }}">{{ u.job_title }} at {{ u.company_name }}</a>
+                {% if u.interviewer %}<span class="muted small"> with {{ u.interviewer }}</span>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty"><p>No upcoming interviews on the calendar.</p></div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h2>Recent applications</h2>
+    {% if recent %}
+    <div class="table-wrap"><table>
+        <thead><tr><th>Job</th><th>Company</th><th>Applied</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for a in recent %}
+        <tr>
+            <td><a href="{{ url_for('application_detail', application_id=a.application_id) }}">{{ a.job_title }}</a></td>
+            <td>{{ a.company_name }}</td>
+            <td class="small">{{ a.application_date }}</td>
+            <td>{{ status_badge(a.status) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}
+    <div class="empty"><p>Nothing here yet. Add your first application to get started.</p></div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Salary snapshot</h2>
+    {% if salary.avg_min is not none %}
+    <p style="margin:0">Across saved jobs, the average salary range is
+        <strong>{{ money(salary.avg_min|int) }}</strong> to <strong>{{ money(salary.avg_max|int) }}</strong> per year.</p>
+    {% else %}
+    <p class="muted" style="margin:0">Add salaries to your jobs to see an average here.</p>
+    {% endif %}
+</div>
+{% endblock %}
