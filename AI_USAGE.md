@@ -16,6 +16,7 @@ These are roughly what I typed, shortened a bit.
 4. "Don't over-engineer this. Keep it simple, hit everything in the rubric, no extra features."
 5. I asked for the README and docs to be written in plain, normal language and not sound like AI.
 6. I asked it to record the demo video with OBS, since narration was optional.
+7. I sent it my Assignment 1-5 instruction docs and asked it to check the project against them, since the assignment says to use the tables from those.
 
 ## What Worked Well
 
@@ -43,11 +44,13 @@ When git had no name or email set, the agent stopped and asked me instead of gue
 - Wrong package version. The AI pinned `mysql-connector-python` to 9.4.0 from memory, but the version actually installed was 26.10.0. This was caught before the commit and `requirements.txt` was fixed using `pip freeze`.
 - Windows path bug. A helper script used a Git Bash style `/c/...` path that Windows Python couldn't read, so one route silently didn't get added. It got caught because the nav link threw a `url_for` BuildError. It was fixed with a normal Windows path.
 - Review pass. A second agent went through every page and the code. It didn't find logic or security bugs, but it fixed the Edit/Delete buttons breaking the table row lines and made the "n/a" on jobs with no requirements grey instead of red so it doesn't look like a 0% score.
+- Schema. The first version only followed the project spec. After comparing it with Assignments 1-5, the schema got the missing columns (`job_description`, `is_active`, `response_date`, `interview_date`, `notes`, `created_at`), the Assignment 3 indexes, and the assignments' sample data. Where the two documents disagreed on a name or type, I kept the spec's version. The job and application forms and the detail pages got the new fields, and failed writes in `database.py` now roll back like in Assignments 4 and 5.
 - Docs. I had the README and this file rewritten in plainer wording, and the setup steps were tested on a fresh clone.
 
 ## Lessons Learned
 
 - Giving the AI the whole spec up front worked better than describing it piece by piece.
+- Give the AI all the context up front, including the earlier assignments. It only knows what you give it, and it built the first version without Assignments 2 to 5, so the schema had to be fixed afterwards.
 - You still have to test what it writes. Some things only showed up when the app actually ran, like the missing route and the wrong package version.
 - The AI can be confidently wrong about versions and file paths. Check with `pip freeze` and by running things instead of trusting what it says from memory.
 - If you don't tell it the scope, it adds extras. Saying "keep it simple" made a real difference.
